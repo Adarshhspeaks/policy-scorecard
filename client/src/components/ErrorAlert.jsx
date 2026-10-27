@@ -1,11 +1,28 @@
 import React from 'react';
 import { AlertTriangleIcon, ScanAlertIcon, XIcon } from './Icons';
 
+function parseErrorMessage(msg) {
+  if (!msg || typeof msg !== 'string') return '';
+  try {
+    const parsed = JSON.parse(msg);
+    if (parsed.error?.message) {
+      return parsed.error.message;
+    }
+    if (parsed.message) {
+      return parsed.message;
+    }
+  } catch {}
+  return msg;
+}
+
 export default function ErrorAlert({ error, onDismiss, onRetry }) {
   if (!error) return null;
 
-  const isScannedPdf = error.status === 422 || (typeof error.message === 'string' && error.message.toLowerCase().includes('scanned pdf'));
-  const isNetworkError = typeof error.message === 'string' && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('ECONNREFUSED'));
+  const rawMessage = error.message || '';
+  const cleanMessage = parseErrorMessage(rawMessage);
+  const isInvalidApiKey = cleanMessage.toLowerCase().includes('api key not valid') || rawMessage.toLowerCase().includes('api_key_invalid');
+  const isScannedPdf = error.status === 422 || rawMessage.toLowerCase().includes('scanned pdf') || cleanMessage.toLowerCase().includes('scanned pdf');
+  const isNetworkError = rawMessage.includes('Failed to fetch') || rawMessage.includes('NetworkError') || rawMessage.includes('ECONNREFUSED');
 
   if (isScannedPdf) {
     return (
@@ -56,7 +73,11 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-rose-100 text-base">
-              {isNetworkError ? 'Cannot Connect to Backend Server' : 'Analysis Request Failed'}
+              {isNetworkError
+                ? 'Cannot Connect to Backend Server'
+                : isInvalidApiKey
+                ? 'Invalid Gemini API Key in .env'
+                : 'Analysis Request Failed'}
             </h4>
             {onDismiss && (
               <button
@@ -67,16 +88,45 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
               </button>
             )}
           </div>
+
           <p className="text-sm text-rose-200/90 mt-1.5 leading-relaxed">
             {isNetworkError
               ? `Unable to communicate with the API server at ${import.meta.env.VITE_API_URL || 'http://localhost:5000'}. Make sure your Node.js backend is running with "npm start".`
-              : error.message || 'An unexpected error occurred while analyzing the document.'}
+              : cleanMessage || 'An unexpected error occurred while analyzing the document.'}
           </p>
-          {error.status === 500 && (
+
+          {isInvalidApiKey && (
+            <div className="mt-3 text-xs text-rose-300 bg-rose-950/60 p-3 rounded-xl border border-rose-900/60 space-y-1.5">
+              <div className="font-semibold text-rose-200">How to fix your API key:</div>
+              <ul className="list-disc pl-4 space-y-1 text-rose-300/90">
+                <li>
+                  Your key in <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">.env</code> starts with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AQ.</code>, which is an OAuth or internal session token, not a Google AI Studio API key.
+                </li>
+                <li>
+                  A valid Gemini API key starts with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AIzaSy...</code>
+                </li>
+                <li>
+                  Get a free key at{' '}
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline text-indigo-300 hover:text-indigo-200 font-medium"
+                  >
+                    https://aistudio.google.com/app/apikey
+                  </a>
+                  , paste it in <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">.env</code>, and restart with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">npm start</code>.
+                </li>
+              </ul>
+            </div>
+          )}
+
+          {!isInvalidApiKey && error.status === 500 && (
             <p className="text-xs text-rose-300/80 mt-2 font-mono bg-rose-950/40 p-2 rounded border border-rose-900/40">
               Tip: Verify that GEMINI_API_KEY is configured in your backend .env file.
             </p>
           )}
+
           {onRetry && (
             <div className="mt-3">
               <button
