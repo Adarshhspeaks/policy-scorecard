@@ -96,28 +96,37 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
           </p>
 
           {isInvalidApiKey && (
-            <div className="mt-3 text-xs text-rose-300 bg-rose-950/60 p-3 rounded-xl border border-rose-900/60 space-y-1.5">
-              <div className="font-semibold text-rose-200">How to fix your API key:</div>
-              <ul className="list-disc pl-4 space-y-1 text-rose-300/90">
-                <li>
-                  Your key in <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">.env</code> starts with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AQ.</code>, which is an OAuth or internal session token, not a Google AI Studio API key.
-                </li>
-                <li>
-                  A valid Gemini API key starts with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AIzaSy...</code>
-                </li>
-                <li>
-                  Get a free key at{' '}
+            <div className="mt-3 text-xs text-rose-300 bg-rose-950/60 p-3.5 rounded-xl border border-rose-900/60 space-y-2">
+              <div className="font-semibold text-rose-200">How to fix this error:</div>
+              <p className="text-rose-300/90 leading-relaxed">
+                Google returned <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">ACCESS_TOKEN_TYPE_UNSUPPORTED</code>. This occurs when an <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AQ.</code> key is created in an existing Google Cloud project where the Generative Language API is not yet enabled.
+              </p>
+              <div className="space-y-1.5 pl-1">
+                <div>
+                  <strong className="text-rose-100">Option A (Fastest):</strong> In{' '}
                   <a
                     href="https://aistudio.google.com/app/apikey"
                     target="_blank"
                     rel="noreferrer"
                     className="underline text-indigo-300 hover:text-indigo-200 font-medium"
                   >
-                    https://aistudio.google.com/app/apikey
+                    Google AI Studio
                   </a>
-                  , paste it in <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">.env</code>, and restart with <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">npm start</code>.
-                </li>
-              </ul>
+                  , click <strong>Create API key</strong> and choose <strong>"Create API key in new project"</strong>. New projects have all required APIs enabled automatically.
+                </div>
+                <div>
+                  <strong className="text-rose-100">Option B:</strong> If using your existing project, enable the{' '}
+                  <a
+                    href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline text-indigo-300 hover:text-indigo-200 font-medium"
+                  >
+                    Generative Language API in Google Cloud Console
+                  </a>
+                  .
+                </div>
+              </div>
             </div>
           )}
 
