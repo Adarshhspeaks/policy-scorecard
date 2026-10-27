@@ -84,10 +84,27 @@ export default function App() {
       formData.append('policy', file);
 
       const endpoint = `${apiUrl}/api/analyze`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-      });
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (fetchErr) {
+        // Fallback to relative /api/analyze via Vite proxy if direct localhost call fails
+        if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+          try {
+            response = await fetch('/api/analyze', {
+              method: 'POST',
+              body: formData,
+            });
+          } catch (retryErr) {
+            throw fetchErr;
+          }
+        } else {
+          throw fetchErr;
+        }
+      }
 
       const data = await response.json().catch(() => null);
 
