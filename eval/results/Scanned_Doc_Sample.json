@@ -1,0 +1,15 @@
+{
+  "filename": "Scanned_Doc_Sample.pdf",
+  "success": false,
+  "pages": 1,
+  "charsExtracted": 19,
+  "verified": 0,
+  "unverified": 0,
+  "notFound": 0,
+  "timeTakenSec": "0.01",
+  "chunkingUsed": false,
+  "chunksCount": 1,
+  "scorecard": {},
+  "error": "Looks like a scanned PDF (19 chars). OCR not supported yet.",
+  "errorStatus": 422
+}

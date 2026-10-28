@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import UploadZone from './components/UploadZone';
+import CompareUploadZone from './components/CompareUploadZone';
 import LoadingAnalysis from './components/LoadingAnalysis';
+import LoadingCompare from './components/LoadingCompare';
 import ScorecardView from './components/ScorecardView';
+import CompareScorecardView from './components/CompareScorecardView';
 import ErrorAlert from './components/ErrorAlert';
-import { SparklesIcon } from './components/Icons';
+import { SparklesIcon, ScaleIcon, BookOpenIcon } from './components/Icons';
 
-// Mock sample for instant preview / testing
+// Mock sample for instant preview / testing single analysis
 const SAMPLE_MOCK_RESULT = {
   pages: 14,
   scorecard: {
@@ -66,14 +69,22 @@ const SAMPLE_MOCK_RESULT = {
 };
 
 export default function App() {
-  const [analyzingFile, setAnalyzingFile] = useState(null);
+  const [mode, setMode] = useState('single'); // 'single' | 'compare'
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Single analysis state
+  const [analyzingFile, setAnalyzingFile] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analyzedFileName, setAnalyzedFileName] = useState('');
 
+  // Compare mode state
+  const [comparingFiles, setComparingFiles] = useState(null);
+  const [compareResult, setCompareResult] = useState(null);
+
   const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
+  // 1. Single analysis handler
   const handleAnalyze = async (file) => {
     setIsLoading(true);
     setError(null);
@@ -91,7 +102,6 @@ export default function App() {
           body: formData,
         });
       } catch (fetchErr) {
-        // Fallback to relative /api/analyze via Vite proxy if direct localhost call fails
         if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
           try {
             response = await fetch('/api/analyze', {
@@ -109,9 +119,9 @@ export default function App() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const errorMsg = data?.error || `Server responded with status ${response.status}`;
+        const errorMsg = data?.error || data?.message || `Server responded with status ${response.status}`;
         const err = new Error(errorMsg);
-        err.status = response.status;
+        err.status = data?.status || response.status;
         throw err;
       }
 
@@ -133,9 +143,105 @@ export default function App() {
     }
   };
 
+  // 2. Dual comparison handler
+  const handleCompare = async (fileA, fileB) => {
+    setIsLoading(true);
+    setError(null);
+    setComparingFiles({ fileA, fileB });
+
+    try {
+      const formData = new FormData();
+      formData.append('policyA', fileA);
+      formData.append('policyB', fileB);
+
+      const endpoint = `${apiUrl}/api/compare`;
+      let response;
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (fetchErr) {
+        if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+          try {
+            response = await fetch('/api/compare', {
+              method: 'POST',
+              body: formData,
+            });
+          } catch (retryErr) {
+            throw fetchErr;
+          }
+        } else {
+          throw fetchErr;
+        }
+      }
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMsg = data?.error || data?.message || `Server responded with status ${response.status}`;
+        const err = new Error(errorMsg);
+        err.status = data?.status || response.status;
+        throw err;
+      }
+
+      if (!data || !data.a?.scorecard || !data.b?.scorecard) {
+        throw new Error('Invalid comparison structure received from server.');
+      }
+
+      setCompareResult(data);
+    } catch (err) {
+      console.error('Comparison error:', err);
+      setError({
+        status: err.status || 0,
+        message: err.message || 'An unexpected error occurred while comparing policies.',
+      });
+    } finally {
+      setIsLoading(false);
+      setComparingFiles(null);
+    }
+  };
+
+  // 3. Load Sample Policies for comparison
+  const handleLoadSamplePolicies = async () => {
+    setError(null);
+    setIsLoading(true);
+    setComparingFiles({
+      fileA: { name: 'SecureLife_Health_Shield_Sample.pdf' },
+      fileB: { name: 'MediCare_Plus_Sample.pdf' },
+    });
+
+    try {
+      const [resA, resB] = await Promise.all([
+        fetch('/SecureLife_Health_Shield_Sample.pdf'),
+        fetch('/MediCare_Plus_Sample.pdf'),
+      ]);
+
+      if (!resA.ok || !resB.ok) {
+        throw new Error('Sample policies could not be loaded from server.');
+      }
+
+      const [blobA, blobB] = await Promise.all([resA.blob(), resB.blob()]);
+      const fileA = new File([blobA], 'SecureLife_Health_Shield_Sample.pdf', { type: 'application/pdf' });
+      const fileB = new File([blobB], 'MediCare_Plus_Sample.pdf', { type: 'application/pdf' });
+
+      await handleCompare(fileA, fileB);
+    } catch (err) {
+      console.error('Error loading sample comparison:', err);
+      setError({
+        status: err.status || 0,
+        message: err.message || 'Failed to fetch sample comparison PDFs.',
+      });
+      setIsLoading(false);
+      setComparingFiles(null);
+    }
+  };
+
   const handleReset = () => {
     setAnalysisResult(null);
     setAnalyzedFileName('');
+    setCompareResult(null);
+    setComparingFiles(null);
     setError(null);
     setIsLoading(false);
     setAnalyzingFile(null);
@@ -147,27 +253,34 @@ export default function App() {
     setAnalysisResult(SAMPLE_MOCK_RESULT);
   };
 
+  const hasActiveResults = Boolean(analysisResult || compareResult);
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-zinc-100 flex flex-col font-sans">
-      <Navbar onReset={handleReset} hasResults={Boolean(analysisResult)} />
+      <Navbar onReset={handleReset} hasResults={hasActiveResults} />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
-        {/* Error notification banner if any */}
+        {/* Error notification banner */}
         {error && (
           <ErrorAlert
             error={error}
             onDismiss={() => setError(null)}
-            onRetry={analyzingFile ? () => handleAnalyze(analyzingFile) : handleReset}
+            onRetry={handleReset}
           />
         )}
 
-        {/* State 1: Loading view */}
-        {isLoading && (
+        {/* View 1: Loading Single Analysis */}
+        {isLoading && mode === 'single' && (
           <LoadingAnalysis file={analyzingFile} />
         )}
 
-        {/* State 2: Results Scorecard view */}
-        {!isLoading && analysisResult && (
+        {/* View 2: Loading Comparison */}
+        {isLoading && mode === 'compare' && (
+          <LoadingCompare fileA={comparingFiles?.fileA} fileB={comparingFiles?.fileB} />
+        )}
+
+        {/* View 3: Single Scorecard Results */}
+        {!isLoading && analysisResult && mode === 'single' && (
           <ScorecardView
             result={analysisResult}
             fileName={analyzedFileName}
@@ -175,9 +288,53 @@ export default function App() {
           />
         )}
 
-        {/* State 3: Upload Page view */}
-        {!isLoading && !analysisResult && (
+        {/* View 4: Comparison Scorecard Results */}
+        {!isLoading && compareResult && mode === 'compare' && (
+          <CompareScorecardView
+            result={compareResult}
+            onReset={handleReset}
+          />
+        )}
+
+        {/* View 5: Upload / Home Screen */}
+        {!isLoading && !analysisResult && !compareResult && (
           <div className="py-4">
+            {/* Mode Switcher */}
+            <div className="flex items-center justify-center mb-8">
+              <div className="p-1 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center space-x-1 shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('single');
+                    setError(null);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-2 ${
+                    mode === 'single'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  <BookOpenIcon className="w-4 h-4" />
+                  <span>Analyze one policy</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('compare');
+                    setError(null);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-2 ${
+                    mode === 'compare'
+                      ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-purple-500/25'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  <ScaleIcon className="w-4 h-4" />
+                  <span>Compare two policies</span>
+                </button>
+              </div>
+            </div>
+
             {/* Hero Heading */}
             <div className="text-center max-w-2xl mx-auto mb-8">
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4">
@@ -185,34 +342,56 @@ export default function App() {
                 <span>Zero-Hallucination Policy Verification</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                Understand what your health policy{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
-                  actually covers
-                </span>
+                {mode === 'single' ? (
+                  <>
+                    Understand what your health policy{' '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400">
+                      actually covers
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Compare two health policies{' '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-violet-400 to-indigo-400">
+                      side-by-side
+                    </span>
+                  </>
+                )}
               </h1>
               <p className="mt-3 text-sm sm:text-base text-zinc-400 leading-relaxed">
-                Upload your policy PDF to instantly extract critical clauses: waiting periods, room rent caps, co-pay rules, and exclusions with verbatim verified citations.
+                {mode === 'single'
+                  ? 'Upload your policy PDF to instantly extract critical clauses: waiting periods, room rent caps, co-pay rules, and exclusions with verbatim citations.'
+                  : 'Upload two policy PDFs to automatically spot differing waiting periods, room rent caps, co-payments, and sub-limits with verified clause citations.'}
               </p>
             </div>
 
-            {/* Upload Zone */}
-            <UploadZone
-              onAnalyze={handleAnalyze}
-              isLoading={isLoading}
-              error={error}
-              onClearError={() => setError(null)}
-            />
+            {/* Mode-specific upload interface */}
+            {mode === 'single' ? (
+              <>
+                <UploadZone
+                  onAnalyze={handleAnalyze}
+                  isLoading={isLoading}
+                  error={error}
+                  onClearError={() => setError(null)}
+                />
 
-            {/* Demo / Sample Shortcut */}
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                onClick={handleLoadDemo}
-                className="text-xs text-zinc-400 hover:text-zinc-200 underline underline-offset-4 transition-colors"
-              >
-                No PDF on hand? Try interactive preview with sample scorecard data →
-              </button>
-            </div>
+                <div className="mt-8 text-center">
+                  <button
+                    type="button"
+                    onClick={handleLoadDemo}
+                    className="text-xs text-zinc-400 hover:text-zinc-200 underline underline-offset-4 transition-colors"
+                  >
+                    No PDF on hand? Try interactive preview with sample scorecard data →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <CompareUploadZone
+                onCompare={handleCompare}
+                isLoading={isLoading}
+                onLoadSamplePolicies={handleLoadSamplePolicies}
+              />
+            )}
           </div>
         )}
       </main>

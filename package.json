@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "client": "npm --prefix client run dev"
+    "client": "npm --prefix client run dev",
+    "eval": "node scripts/evaluate.js",
+    "score": "node scripts/score.js"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

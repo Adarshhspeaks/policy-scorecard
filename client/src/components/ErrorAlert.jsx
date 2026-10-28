@@ -72,12 +72,19 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-rose-100 text-base">
-              {isNetworkError
-                ? 'Cannot Connect to Backend Server'
-                : isInvalidApiKey
-                ? 'Invalid Gemini API Key in .env'
-                : 'Analysis Request Failed'}
+            <h4 className="font-semibold text-rose-100 text-base flex items-center space-x-2">
+              <span>
+                {isNetworkError
+                  ? 'Cannot Connect to Backend Server'
+                  : isInvalidApiKey
+                  ? 'Invalid Gemini API Key in .env'
+                  : 'Analysis Request Failed'}
+              </span>
+              {error.status ? (
+                <span className="text-xs px-2 py-0.5 rounded bg-rose-950/80 border border-rose-800/80 text-rose-300 font-mono">
+                  HTTP {error.status}
+                </span>
+              ) : null}
             </h4>
             {onDismiss && (
               <button
@@ -89,11 +96,17 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
             )}
           </div>
 
-          <p className="text-sm text-rose-200/90 mt-1.5 leading-relaxed">
+          <p className="text-sm text-rose-200/90 mt-1.5 leading-relaxed break-words">
             {isNetworkError
               ? `Unable to communicate with the API server at ${import.meta.env.VITE_API_URL || 'http://localhost:5000'}. Make sure your Node.js backend is running with "npm start".`
               : cleanMessage || 'An unexpected error occurred while analyzing the document.'}
           </p>
+
+          {error.status === 503 && (
+            <p className="text-xs text-amber-300/90 mt-2 font-mono bg-amber-950/40 p-2 rounded border border-amber-900/40">
+              Note: The Gemini service is temporarily experiencing high traffic spikes. Please wait a few seconds and click "Try Again".
+            </p>
+          )}
 
           {isInvalidApiKey && (
             <div className="mt-3 text-xs text-rose-300 bg-rose-950/60 p-3.5 rounded-xl border border-rose-900/60 space-y-2">
