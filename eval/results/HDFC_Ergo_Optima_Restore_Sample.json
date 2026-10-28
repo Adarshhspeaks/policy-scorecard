@@ -6,20 +6,22 @@
   "verified": 3,
   "unverified": 0,
   "notFound": 5,
-  "timeTakenSec": "33.50",
-  "chunkingUsed": false,
-  "chunksCount": 1,
+  "timeTakenSec": "0.00",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "cached": true,
+  "calls_used": 0,
   "scorecard": {
     "waiting_period_initial": {
-      "value": "A 30-day waiting period applies to all treatments except accidents.",
+      "value": "An initial waiting period of 30 days applies to all treatments, except for accidental injuries.",
       "page": 1,
-      "clause": "2. Initial 30-Day Waiting Period A waiting period of 30 days shall apply to all medical treatments, except in case of accidental injury occurring during the policy period.",
+      "clause": "2. Initial 30-Day Waiting Period A waiting period of 30 days shall apply to all medical treatments, except in case of accidental injury occurring during the policy period. Sickness diagnosed within the first thirty days is excluded.",
       "confidence": "high",
       "status": "verified",
       "matchMethod": "exact_raw"
     },
     "waiting_period_preexisting": {
-      "value": "Pre-existing diseases are covered after 36 continuous months.",
+      "value": "Pre-existing diseases and their complications are covered after 36 continuous months of waiting.",
       "page": 1,
       "clause": "3. Waiting Period for Pre-Existing Conditions Pre-existing diseases and their complications will be covered after a waiting period of 36 continuous months under this Policy.",
       "confidence": "high",
@@ -27,18 +29,40 @@
       "matchMethod": "exact_raw"
     },
     "waiting_period_specific": {
-      "value": "A 24-month waiting period applies to specific conditions like cataract, hernia, hydrocele, joint replacement, and gall stones.",
+      "value": "A 24-month waiting period applies for specific illnesses like cataract, hernia, hydrocele, joint replacement surgery, and gall stones.",
       "page": 2,
       "clause": "4. Specific Disease Waiting Period (2 Years) A waiting period of 24 months of continuous coverage applies for specific illnesses: cataract, hernia, hydrocele, joint replacement surgery, and gall stones.",
       "confidence": "high",
       "status": "verified",
       "matchMethod": "exact_raw"
     },
+    "room_rent_cap": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "copay": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "sub_limits": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "exclusions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "claim_conditions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
     "_meta": {
-      "chunkingUsed": false,
-      "chunksCount": 1,
-      "totalChars": 2378,
-      "totalPages": 3
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "cached": true,
+      "calls_used": 0,
+      "totalPages": 3,
+      "totalChars": 2378
     }
   },
   "error": null,

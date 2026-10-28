@@ -21,10 +21,29 @@ function csvEscape(val) {
   return str;
 }
 
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let maxCalls = Infinity;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--max-calls" && args[i + 1]) {
+      maxCalls = parseInt(args[i + 1], 10);
+      i++;
+    } else if (args[i].startsWith("--max-calls=")) {
+      maxCalls = parseInt(args[i].split("=")[1], 10);
+    }
+  }
+  return { maxCalls };
+}
+
 async function runEvaluation() {
+  const { maxCalls } = parseArgs();
+
   console.log("==================================================");
   console.log("       POLICY SCORECARD EVALUATION HARNESS        ");
   console.log("==================================================");
+  if (maxCalls !== Infinity) {
+    console.log(`Max API calls limit: ${maxCalls} calls per run`);
+  }
 
   if (!fs.existsSync(POLICIES_DIR)) {
     console.error(`Error: Policy directory '${POLICIES_DIR}' does not exist.`);
@@ -49,6 +68,7 @@ async function runEvaluation() {
 
   const results = [];
   const fieldKeys = Object.keys(FIELDS);
+  let totalCallsUsed = 0;
 
   for (let i = 0; i < files.length; i++) {
     const filename = files[i];
@@ -65,8 +85,10 @@ async function runEvaluation() {
       unverified: 0,
       notFound: 0,
       timeTakenSec: "0.00",
-      chunkingUsed: false,
-      chunksCount: 1,
+      provider: "N/A",
+      model: "N/A",
+      cached: false,
+      calls_used: 0,
       scorecard: {},
       error: null,
       errorStatus: null,
@@ -87,15 +109,20 @@ async function runEvaluation() {
       }
 
       console.log(`  -> Extracted ${pages.length} pages, ${charsExtracted} characters.`);
-      const raw = await extractScorecard(pages);
+
+      const raw = await extractScorecard(pages, { maxCalls, currentCallsUsed: totalCallsUsed });
       const scorecard = validateScorecard(raw, pages);
 
       fileResult.scorecard = scorecard;
       fileResult.success = true;
 
       const meta = scorecard._meta || raw._meta || {};
-      fileResult.chunkingUsed = Boolean(meta.chunkingUsed);
-      fileResult.chunksCount = meta.chunksCount || 1;
+      fileResult.provider = meta.provider || "gemini";
+      fileResult.model = meta.model || "gemini-2.5-flash";
+      fileResult.cached = Boolean(meta.cached);
+      fileResult.calls_used = meta.calls_used ?? 1;
+
+      totalCallsUsed += fileResult.calls_used;
 
       // Count statuses
       for (const key of fieldKeys) {
@@ -109,8 +136,7 @@ async function runEvaluation() {
       const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
       fileResult.timeTakenSec = elapsed;
       console.log(
-        `  -> Completed in ${elapsed}s: ${fileResult.verified} verified, ${fileResult.unverified} unverified, ${fileResult.notFound} not found.` +
-          (fileResult.chunkingUsed ? ` (Chunking: ${fileResult.chunksCount} chunks)` : "")
+        `  -> Completed in ${elapsed}s | ${fileResult.verified} verified, ${fileResult.unverified} unverified, ${fileResult.notFound} not found | ${fileResult.provider} (${fileResult.model}) | ${fileResult.cached ? "Cached (0 calls)" : "Fresh API call"} | Total calls run: ${totalCallsUsed}`
       );
     } catch (err) {
       const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
@@ -126,8 +152,8 @@ async function runEvaluation() {
     const jsonOutputName = filename.endsWith(".pdf") ? filename.replace(/\.pdf$/i, ".json") : `${filename}.json`;
     fs.writeFileSync(path.join(RESULTS_DIR, jsonOutputName), JSON.stringify(fileResult, null, 2));
 
-    // 2-second rate-limit throttle between files
-    if (i < files.length - 1) {
+    // Pause between files if actual API calls are being made to respect rate limits
+    if (i < files.length - 1 && fileResult.calls_used > 0) {
       console.log("  Waiting 2s before next policy to respect rate limits...\n");
       await new Promise((r) => setTimeout(r, 2000));
     }
@@ -136,16 +162,17 @@ async function runEvaluation() {
   console.log("\nAll policies processed. Generating evaluation reports...");
 
   // Generate Report & CSV
-  generateMarkdownReport(results, fieldKeys);
+  generateMarkdownReport(results, fieldKeys, totalCallsUsed, maxCalls);
   generateManualReviewCsv(results, fieldKeys);
 
   console.log(`\nEvaluation complete!`);
   console.log(`- Markdown report: ${REPORT_FILE}`);
   console.log(`- Manual review CSV: ${REVIEW_CSV}`);
   console.log(`- Raw results: ${RESULTS_DIR}/`);
+  console.log(`- Total API calls used: ${totalCallsUsed}`);
 }
 
-function generateMarkdownReport(results, fieldKeys) {
+function generateMarkdownReport(results, fieldKeys, totalCallsUsed, maxCalls) {
   const successfulPolicies = results.filter((r) => r.success);
   const totalAnalyzed = successfulPolicies.length;
   const totalFields = totalAnalyzed * fieldKeys.length;
@@ -210,7 +237,8 @@ function generateMarkdownReport(results, fieldKeys) {
   lines.push("# Policy Scorecard Evaluation Report");
   lines.push("");
   lines.push(`Generated: ${new Date().toISOString()}  `);
-  lines.push(`Evaluator Engine: Google Gemini API (${process.env.GEMINI_MODEL || "gemini-2.5-flash"})  `);
+  lines.push(`Configured Providers: \`${process.env.PROVIDERS || "gemini,groq,ollama"}\`  `);
+  lines.push(`Total API Calls Used This Run: **${totalCallsUsed}** (Cap: ${maxCalls === Infinity ? "Unlimited" : maxCalls})  `);
   lines.push("");
   lines.push("---");
   lines.push("");
@@ -223,20 +251,20 @@ function generateMarkdownReport(results, fieldKeys) {
   lines.push(`- **Overall Verification Rate**: **${overallRate}%** (${totalVerified}/${totalFields} fields verified)`);
   lines.push(`- **Unverified Fields**: ${totalUnverified}`);
   lines.push(`- **Not Found Fields**: ${totalNotFound}`);
+  lines.push(`- **Total LLM API Calls Made**: ${totalCallsUsed}`);
   lines.push("");
   lines.push("---");
   lines.push("");
 
   lines.push("## 2. Policy-by-Policy Results Table");
   lines.push("");
-  lines.push("| Policy Name | Pages | Chars Extracted | Verified | Unverified | Not Found | Chunking | Time (s) | Status |");
-  lines.push("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |");
+  lines.push("| Policy Name | Pages | Chars | Verified | Unverified | Not Found | Provider | Model | Cache Status | Calls | Time (s) | Status |");
+  lines.push("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |");
 
   results.forEach((r) => {
-    const chunkInfo = r.chunkingUsed ? `Yes (${r.chunksCount} chunks)` : "No";
-    const statusLabel = r.success ? "Success" : `Error ${r.errorStatus || ""}: ${r.error?.slice(0, 35)}...`;
+    const statusLabel = r.success ? "Success" : `Error ${r.errorStatus || ""}: ${r.error?.slice(0, 30)}...`;
     lines.push(
-      `| \`${r.filename}\` | ${r.pages} | ${r.charsExtracted.toLocaleString()} | ${r.verified} | ${r.unverified} | ${r.notFound} | ${chunkInfo} | ${r.timeTakenSec} | ${statusLabel} |`
+      `| \`${r.filename}\` | ${r.pages} | ${r.charsExtracted.toLocaleString()} | ${r.verified} | ${r.unverified} | ${r.notFound} | \`${r.provider}\` | \`${r.model}\` | ${r.cached ? "Cached" : "Fresh"} | ${r.calls_used} | ${r.timeTakenSec} | ${statusLabel} |`
     );
   });
 
@@ -325,7 +353,6 @@ function generateManualReviewCsv(results, fieldKeys) {
 
   results.forEach((r) => {
     if (!r.success) {
-      // Record failed policy with error
       rows.push([r.filename, "ALL_FIELDS", `ERROR: ${r.error}`, "N/A", "N/A", "error", ""].map(csvEscape).join(","));
       return;
     }

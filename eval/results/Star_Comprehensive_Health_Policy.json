@@ -3,55 +3,17 @@
   "success": true,
   "pages": 4,
   "charsExtracted": 3169,
-  "verified": 8,
+  "verified": 3,
   "unverified": 0,
-  "notFound": 0,
-  "timeTakenSec": "27.04",
-  "chunkingUsed": false,
-  "chunksCount": 1,
+  "notFound": 5,
+  "timeTakenSec": "0.01",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "cached": true,
+  "calls_used": 0,
   "scorecard": {
-    "claim_conditions": {
-      "value": "Intimation must be given at least 48 hours before planned admission or within 24 hours of emergency admission. Complete claim documents must be submitted within 30 days after discharge.",
-      "page": 4,
-      "clause": "In case of planned hospitalization, the Company must be intimating at least 48 hours prior to admission. In case of emergency hospitalization, intimation must be given within 24 hours of admission. Complete claim documents must be submitted within 30 days of discharge.",
-      "confidence": "high",
-      "status": "verified",
-      "matchMethod": "exact_raw"
-    },
-    "copay": {
-      "value": "10% co-payment applies to claims for insured individuals aged 60 years or older. No co-payment is required for members under 60.",
-      "page": 2,
-      "clause": "A co-payment of 10% shall apply to each and every admissible claim if the insured person is aged 60 years or above at the time of claim intimation.",
-      "confidence": "high",
-      "status": "verified",
-      "matchMethod": "exact_raw"
-    },
-    "exclusions": {
-      "value": "Permanent exclusions include treatment for alcoholism, drug addiction, self-inflicted injuries, cosmetic/aesthetic procedures, weight loss surgeries, and hazardous sports.",
-      "page": 4,
-      "clause": "The following conditions are permanently excluded: treatment for alcoholism, drug addiction, intentional self-injury, aesthetic or cosmetic treatments, obesity/weight management surgeries, and hazardous sports unless expressly endorsed in writing.",
-      "confidence": "high",
-      "status": "verified",
-      "matchMethod": "exact_raw"
-    },
-    "room_rent_cap": {
-      "value": "Room rent, boarding, and nursing charges are limited to 1% of the Sum Insured per day, up to a Single Private A/C Room maximum.",
-      "page": 2,
-      "clause": "Room Rent, boarding and nursing expenses are covered up to 1% of Sum Insured per day, subject to a maximum of Single Private A/C Room.",
-      "confidence": "high",
-      "status": "verified",
-      "matchMethod": "exact_raw"
-    },
-    "sub_limits": {
-      "value": "Cataract surgery is capped at Rs. 35,000 per eye, and Robotic/Cyberknife surgeries are capped at 50% of the Sum Insured.",
-      "page": 3,
-      "clause": "Expenses incurred for Cataract surgery shall be capped at Rs. 35,000 per eye. Robotic / Cyberknife surgeries are covered up to a sub-limit of 50% of the total Sum Insured.",
-      "confidence": "high",
-      "status": "verified",
-      "matchMethod": "exact_raw"
-    },
     "waiting_period_initial": {
-      "value": "A initial waiting period of 30 days applies to all medical and surgical treatments, except for accidental bodily injuries.",
+      "value": "30 days for all medical and surgical treatments, except for accidents.",
       "page": 1,
       "clause": "A waiting period of thirty (30) days from the commencement date of the policy shall apply to all medical and surgical treatments, except in case of accidental bodily injury occurring during the policy period.",
       "confidence": "high",
@@ -59,7 +21,7 @@
       "matchMethod": "exact_raw"
     },
     "waiting_period_preexisting": {
-      "value": "Pre-existing diseases require a waiting period of 36 continuous months of coverage before claims can be made.",
+      "value": "36 continuous months of coverage for pre-existing diseases and their complications.",
       "page": 1,
       "clause": "Pre-Existing Diseases and their direct complications shall not be covered until thirty-six (36) continuous months of coverage have elapsed since the inception of the first policy.",
       "confidence": "high",
@@ -67,18 +29,40 @@
       "matchMethod": "exact_raw"
     },
     "waiting_period_specific": {
-      "value": "A mandatory 24-month waiting period applies for specified ailments including cataract, hernia, hydrocele, benign prostatic hypertrophy, joint replacements, and calculus diseases.",
+      "value": "24 months for specified ailments like cataract, hernia, hydrocele, joint replacement, etc.",
       "page": 2,
       "clause": "Expenses on treatment of the following specified ailments: cataract, benign prostatic hypertrophy, hernia, hydrocele, joint replacement surgeries, and calculus diseases are subject to a mandatory 24-month waiting period from initial inception.",
       "confidence": "high",
       "status": "verified",
       "matchMethod": "exact_raw"
     },
+    "room_rent_cap": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "copay": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "sub_limits": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "exclusions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "claim_conditions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
     "_meta": {
-      "chunkingUsed": false,
-      "chunksCount": 1,
-      "totalChars": 3169,
-      "totalPages": 4
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "cached": true,
+      "calls_used": 0,
+      "totalPages": 4,
+      "totalChars": 3169
     }
   },
   "error": null,

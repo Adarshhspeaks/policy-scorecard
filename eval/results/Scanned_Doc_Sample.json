@@ -7,8 +7,10 @@
   "unverified": 0,
   "notFound": 0,
   "timeTakenSec": "0.01",
-  "chunkingUsed": false,
-  "chunksCount": 1,
+  "provider": "N/A",
+  "model": "N/A",
+  "cached": false,
+  "calls_used": 0,
   "scorecard": {},
   "error": "Looks like a scanned PDF (19 chars). OCR not supported yet.",
   "errorStatus": 422

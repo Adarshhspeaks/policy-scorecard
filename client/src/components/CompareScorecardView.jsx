@@ -226,12 +226,26 @@ export default function CompareScorecardView({ result, onReset }) {
               <span>Policy Comparison Report</span>
             </h2>
             <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-1">
-              <span className="font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                A: {nameA} ({pagesA} pgs)
+              <span className="font-medium text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20 inline-flex flex-wrap items-center gap-2">
+                <span>A: {nameA} ({pagesA} pgs)</span>
+                {policyA?.model && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-medium border ${
+                    policyA.cached ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30'
+                  }`}>
+                    {policyA.model} | {policyA.cached ? 'cached' : 'fresh'}
+                  </span>
+                )}
               </span>
               <span className="text-zinc-600 font-bold">vs</span>
-              <span className="font-medium text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                B: {nameB} ({pagesB} pgs)
+              <span className="font-medium text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 inline-flex flex-wrap items-center gap-2">
+                <span>B: {nameB} ({pagesB} pgs)</span>
+                {policyB?.model && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-medium border ${
+                    policyB.cached ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-purple-500/20 text-purple-200 border-purple-500/30'
+                  }`}>
+                    {policyB.model} | {policyB.cached ? 'cached' : 'fresh'}
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -333,13 +347,31 @@ export default function CompareScorecardView({ result, onReset }) {
         {/* Desktop Header */}
         <div className="hidden md:grid grid-cols-12 border-b border-zinc-800 bg-zinc-900/90 text-xs font-semibold text-zinc-400">
           <div className="col-span-3 p-4">Policy Feature</div>
-          <div className="col-span-4 p-4 border-l border-zinc-800/80 flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-            <span className="text-zinc-200 truncate">Policy A: {nameA}</span>
+          <div className="col-span-4 p-4 border-l border-zinc-800/80 flex items-center justify-between gap-2">
+            <div className="flex items-center space-x-2 truncate">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0"></span>
+              <span className="text-zinc-200 truncate">Policy A: {nameA}</span>
+            </div>
+            {policyA?.model && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-medium border flex-shrink-0 ${
+                policyA.cached ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30'
+              }`}>
+                {policyA.cached ? 'cached' : 'fresh'}
+              </span>
+            )}
           </div>
-          <div className="col-span-5 p-4 border-l border-zinc-800/80 flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-            <span className="text-zinc-200 truncate">Policy B: {nameB}</span>
+          <div className="col-span-5 p-4 border-l border-zinc-800/80 flex items-center justify-between gap-2">
+            <div className="flex items-center space-x-2 truncate">
+              <span className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+              <span className="text-zinc-200 truncate">Policy B: {nameB}</span>
+            </div>
+            {policyB?.model && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-medium border flex-shrink-0 ${
+                policyB.cached ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-purple-500/20 text-purple-200 border-purple-500/30'
+              }`}>
+                {policyB.cached ? 'cached' : 'fresh'}
+              </span>
+            )}
           </div>
         </div>
 

@@ -1,7 +1,8 @@
 # Policy Scorecard Evaluation Report
 
-Generated: 2026-10-28T11:29:53.800Z  
-Evaluator Engine: Google Gemini API (gemini-2.5-flash)  
+Generated: 2026-10-28T12:22:02.219Z  
+Configured Providers: `gemini,groq,ollama`  
+Total API Calls Used This Run: **0** (Cap: Unlimited)  
 
 ---
 
@@ -11,22 +12,23 @@ Evaluator Engine: Google Gemini API (gemini-2.5-flash)
 - **Successfully Analyzed Policies**: 5
 - **Skipped / Error Policies**: 1 (e.g. Scanned PDFs / OCR required)
 - **Total Fields Evaluated**: 40
-- **Overall Verification Rate**: **75.0%** (30/40 fields verified)
+- **Overall Verification Rate**: **37.5%** (15/40 fields verified)
 - **Unverified Fields**: 0
-- **Not Found Fields**: 10
+- **Not Found Fields**: 25
+- **Total LLM API Calls Made**: 0
 
 ---
 
 ## 2. Policy-by-Policy Results Table
 
-| Policy Name | Pages | Chars Extracted | Verified | Unverified | Not Found | Chunking | Time (s) | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| `Care_Advantage_Large_Policy.pdf` | 14 | 7,686 | 8 | 0 | 0 | Yes (2 chunks) | 46.66 | Success |
-| `HDFC_Ergo_Optima_Restore_Sample.pdf` | 3 | 2,378 | 3 | 0 | 5 | No | 33.50 | Success |
-| `MediCare_Plus_Sample.pdf` | 3 | 2,916 | 3 | 0 | 5 | No | 15.12 | Success |
-| `Scanned_Doc_Sample.pdf` | 1 | 19 | 0 | 0 | 0 | No | 0.01 | Error 422: Looks like a scanned PDF (19 chars)... |
-| `SecureLife_Health_Shield_Sample.pdf` | 3 | 2,994 | 8 | 0 | 0 | No | 16.91 | Success |
-| `Star_Comprehensive_Health_Policy.pdf` | 4 | 3,169 | 8 | 0 | 0 | No | 27.04 | Success |
+| Policy Name | Pages | Chars | Verified | Unverified | Not Found | Provider | Model | Cache Status | Calls | Time (s) | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| `Care_Advantage_Large_Policy.pdf` | 14 | 7,686 | 3 | 0 | 5 | `gemini` | `gemini-3.5-flash-lite` | Cached | 0 | 0.08 | Success |
+| `HDFC_Ergo_Optima_Restore_Sample.pdf` | 3 | 2,378 | 3 | 0 | 5 | `gemini` | `gemini-3.5-flash-lite` | Cached | 0 | 0.00 | Success |
+| `MediCare_Plus_Sample.pdf` | 3 | 2,916 | 3 | 0 | 5 | `gemini` | `gemini-3.5-flash-lite` | Cached | 0 | 0.01 | Success |
+| `Scanned_Doc_Sample.pdf` | 1 | 19 | 0 | 0 | 0 | `N/A` | `N/A` | Fresh | 0 | 0.01 | Error 422: Looks like a scanned PDF (19 c... |
+| `SecureLife_Health_Shield_Sample.pdf` | 3 | 2,994 | 3 | 0 | 5 | `gemini` | `gemini-3.5-flash-lite` | Cached | 0 | 0.01 | Success |
+| `Star_Comprehensive_Health_Policy.pdf` | 4 | 3,169 | 3 | 0 | 5 | `gemini` | `gemini-3.5-flash-lite` | Cached | 0 | 0.01 | Success |
 
 ---
 
@@ -37,11 +39,11 @@ Evaluator Engine: Google Gemini API (gemini-2.5-flash)
 | `waiting_period_initial` | Initial waiting period before any claim (except accidents) | 5 | 0 | 0 | **100.0%** |
 | `waiting_period_preexisting` | Waiting period for pre-existing diseases | 5 | 0 | 0 | **100.0%** |
 | `waiting_period_specific` | Waiting period for specific illnesses/procedures (e.g. cataract, hernia) | 5 | 0 | 0 | **100.0%** |
-| `room_rent_cap` | Room rent limit / cap (per day or % of sum insured) | 3 | 0 | 2 | **60.0%** |
-| `copay` | Co-payment percentage the policyholder must pay | 3 | 0 | 2 | **60.0%** |
-| `sub_limits` | Sub-limits on specific treatments or disease groups | 3 | 0 | 2 | **60.0%** |
-| `exclusions` | Major permanent exclusions (what is never covered) | 3 | 0 | 2 | **60.0%** |
-| `claim_conditions` | Key claim conditions (intimation deadline, documents, cashless rules) | 3 | 0 | 2 | **60.0%** |
+| `room_rent_cap` | Room rent limit / cap (per day or % of sum insured) | 0 | 0 | 5 | **0.0%** |
+| `copay` | Co-payment percentage the policyholder must pay | 0 | 0 | 5 | **0.0%** |
+| `sub_limits` | Sub-limits on specific treatments or disease groups | 0 | 0 | 5 | **0.0%** |
+| `exclusions` | Major permanent exclusions (what is never covered) | 0 | 0 | 5 | **0.0%** |
+| `claim_conditions` | Key claim conditions (intimation deadline, documents, cashless rules) | 0 | 0 | 5 | **0.0%** |
 
 ---
 
@@ -49,7 +51,7 @@ Evaluator Engine: Google Gemini API (gemini-2.5-flash)
 
 | Match Method | Description | Count | % of Verified |
 | :--- | :--- | :---: | :---: |
-| `exact_raw` | Matched via exact raw | 30 | 100.0% |
+| `exact_raw` | Matched via exact raw | 15 | 100.0% |
 
 ---
 

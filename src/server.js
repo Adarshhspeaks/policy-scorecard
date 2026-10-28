@@ -5,6 +5,7 @@ import multer from "multer";
 import { pdfToPages } from "./pdf.js";
 import { extractScorecard } from "./extract.js";
 import { validateScorecard } from "./validate.js";
+import { isCacheEnabled } from "./cache.js";
 
 const app = express();
 app.use(cors());
@@ -13,12 +14,20 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 },
 });
 
-function sanitizeErrorMessage(msg, apiKey) {
+function sanitizeErrorMessage(msg) {
   if (!msg) return "An unexpected error occurred.";
   let str = typeof msg === "string" ? msg : JSON.stringify(msg);
-  if (apiKey && apiKey.length > 5) {
-    str = str.replaceAll(apiKey, "[REDACTED_API_KEY]");
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey && geminiKey.length > 5) {
+    str = str.replaceAll(geminiKey, "[REDACTED_API_KEY]");
   }
+
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey && groqKey.length > 5) {
+    str = str.replaceAll(groqKey, "[REDACTED_API_KEY]");
+  }
+
   str = str.replace(/key=[a-zA-Z0-9_\-\.]+/g, "key=[REDACTED]");
   return str;
 }
@@ -27,7 +36,7 @@ function extractErrorInfo(e) {
   let status = e.status || e.statusCode || (typeof e.code === "number" ? e.code : 500);
   let message = e.message || "Failed to analyze policy document.";
 
-  // Check if message is a JSON string from Google Gemini API (e.g. {"error":{"code":503,"message":"..."}})
+  // Check if message is a JSON string (e.g. from an API error response)
   try {
     const parsed = JSON.parse(message);
     if (parsed.error) {
@@ -45,7 +54,7 @@ function extractErrorInfo(e) {
     status = 500;
   }
 
-  const sanitizedMessage = sanitizeErrorMessage(message, process.env.GEMINI_API_KEY);
+  const sanitizedMessage = sanitizeErrorMessage(message);
   return { status, message: sanitizedMessage };
 }
 
@@ -64,10 +73,16 @@ export async function processPolicyFile(file) {
 
   const raw = await extractScorecard(pages);
   const scorecard = validateScorecard(raw, pages);
+  const meta = scorecard._meta || raw._meta || {};
+
   return {
     filename: file.originalname || "policy.pdf",
     pages: pages.length,
     scorecard,
+    provider: meta.provider || "gemini",
+    model: meta.model || "gemini-2.5-flash",
+    cached: Boolean(meta.cached),
+    calls_used: meta.calls_used ?? 1,
   };
 }
 
@@ -77,7 +92,14 @@ app.post("/api/analyze", upload.single("policy"), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: "Upload a PDF as 'policy'" });
 
     const result = await processPolicyFile(req.file);
-    res.json({ pages: result.pages, scorecard: result.scorecard });
+    res.json({
+      pages: result.pages,
+      scorecard: result.scorecard,
+      provider: result.provider,
+      model: result.model,
+      cached: result.cached,
+      calls_used: result.calls_used,
+    });
   } catch (e) {
     console.error("Error in /api/analyze:", e);
     const { status, message } = extractErrorInfo(e);
@@ -129,14 +151,17 @@ const server = app.listen(PORT, () => {
   const isLoaded = Boolean(apiKey);
   const keyLength = apiKey.length;
   const keyFirst4 = apiKey ? apiKey.slice(0, 4) : "NONE";
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const providers = process.env.PROVIDERS || "gemini,groq,ollama";
+  const cacheStatus = isCacheEnabled() ? "ENABLED (SHA-256 disk cache)" : "BYPASSED (CACHE=off)";
 
   console.log("==========================================");
   console.log(`Backend server running on http://localhost:${PORT}`);
-  console.log(`GEMINI_API_KEY loaded: ${isLoaded ? "YES" : "NO"}`);
-  console.log(`GEMINI_API_KEY length: ${keyLength}`);
-  console.log(`GEMINI_API_KEY first 4 chars: ${keyFirst4}`);
-  console.log(`GEMINI_MODEL: ${model}`);
+  console.log(`PROVIDERS priority list: ${providers}`);
+  console.log(`RESPONSE CACHE: ${cacheStatus}`);
+  console.log(`GEMINI_API_KEY loaded: ${isLoaded ? "YES" : "NO"} (${keyLength} chars, prefix: ${keyFirst4})`);
+  console.log(`GEMINI_MODEL: ${process.env.GEMINI_MODEL || "gemini-2.5-flash"}`);
+  console.log(`GROQ_API_KEY: ${process.env.GROQ_API_KEY ? "CONFIGURED" : "NOT CONFIGURED"}`);
+  console.log(`OLLAMA_BASE_URL: ${process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1"}`);
   console.log("==========================================");
 });
 

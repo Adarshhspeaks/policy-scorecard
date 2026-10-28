@@ -6,12 +6,14 @@
   "verified": 3,
   "unverified": 0,
   "notFound": 5,
-  "timeTakenSec": "15.12",
-  "chunkingUsed": false,
-  "chunksCount": 1,
+  "timeTakenSec": "0.01",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "cached": true,
+  "calls_used": 0,
   "scorecard": {
     "waiting_period_initial": {
-      "value": "Initial waiting period of 30 days applies to all medical and surgical treatments except for accidental bodily injury.",
+      "value": "An initial waiting period of 30 days applies to all medical and surgical treatments, except for accidental injuries.",
       "page": 1,
       "clause": "A waiting period of thirty (30) days from the inception date of this Policy shall apply to all medical and surgical treatments, except in case of accidental bodily injury occurring during the policy period.",
       "confidence": "high",
@@ -19,7 +21,7 @@
       "matchMethod": "exact_raw"
     },
     "waiting_period_preexisting": {
-      "value": "Pre-existing diseases and their complications are covered after 48 continuous months of policy coverage.",
+      "value": "Pre-existing diseases have a waiting period of 48 continuous months of coverage.",
       "page": 1,
       "clause": "Pre-Existing Diseases and their direct complications shall not be covered until 48 continuous months of health insurance coverage have elapsed since the inception of the first policy with us.",
       "confidence": "high",
@@ -27,18 +29,40 @@
       "matchMethod": "exact_raw"
     },
     "waiting_period_specific": {
-      "value": "A 24-month waiting period applies to specific illnesses such as cataract, hernia, hydrocele, joint replacement surgery, and calculus diseases.",
+      "value": "A 24-month waiting period applies to specific illnesses including cataract, hernia, hydrocele, joint replacement surgery, and calculus diseases.",
       "page": 2,
       "clause": "The expenses on treatment of the following specified illnesses and procedures: cataract, hernia, hydrocele, joint replacement surgery, and calculus diseases shall be payable only after a waiting period of 24 months of continuous coverage under this policy.",
       "confidence": "high",
       "status": "verified",
       "matchMethod": "exact_raw"
     },
+    "room_rent_cap": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "copay": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "sub_limits": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "exclusions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
+    "claim_conditions": {
+      "status": "not_found",
+      "matchMethod": "none"
+    },
     "_meta": {
-      "chunkingUsed": false,
-      "chunksCount": 1,
-      "totalChars": 2916,
-      "totalPages": 3
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite",
+      "cached": true,
+      "calls_used": 0,
+      "totalPages": 3,
+      "totalChars": 2916
     }
   },
   "error": null,

@@ -89,7 +89,7 @@ export default function ScorecardView({ result, fileName, onReset }) {
             <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight flex items-center space-x-2">
               <span>Policy Scorecard</span>
             </h2>
-            <div className="flex items-center space-x-2 text-xs text-zinc-400 mt-0.5">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-0.5">
               <span className="font-medium text-zinc-300 truncate max-w-xs sm:max-w-md">
                 {fileName || 'Analyzed Document'}
               </span>
@@ -98,6 +98,20 @@ export default function ScorecardView({ result, fileName, onReset }) {
                 <BookOpenIcon className="w-3.5 h-3.5 text-zinc-500" />
                 <span>{pages} {pages === 1 ? 'page' : 'pages'} scanned</span>
               </span>
+              {result?.model && (
+                <>
+                  <span>•</span>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono border font-medium ${
+                      result.cached
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                    }`}
+                  >
+                    {result.model} | {result.cached ? 'cached' : 'fresh'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
