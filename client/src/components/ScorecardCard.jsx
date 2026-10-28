@@ -1,175 +1,173 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CheckIcon, 
   AlertTriangleIcon, 
   HelpCircleIcon, 
   ChevronDownIcon, 
-  CopyIcon, 
-  BookOpenIcon, 
-  QuoteIcon 
+  CopyIcon,
+  CheckIcon as CopiedCheckIcon
 } from './Icons';
-import { 
-  snakeToTitleCase, 
-  getFieldTitle, 
-  getFieldDescription, 
-  extractPageNumber, 
-  getStatusBadge, 
-  getConfidenceBadge 
-} from '../utils/formatters';
+import { getFieldTitle, getFieldDescription, getStatusBadge, getConfidenceBadge, extractPageNumber } from '../utils/formatters';
+import { ClampedValue } from '../utils/factHighlighter';
 
-export default function ScorecardCard({ fieldKey, data, isDefaultExpanded = false }) {
-  const [isClauseExpanded, setIsClauseExpanded] = useState(isDefaultExpanded);
+export default function ScorecardCard({ fieldKey, data, isExpandedDefault = false }) {
+  const [showClause, setShowClause] = useState(isExpandedDefault);
   const [copied, setCopied] = useState(false);
 
-  const status = data?.status || 'not_found';
-  const page = extractPageNumber(data);
-  const statusBadge = getStatusBadge(status, page);
-  const confidenceBadge = getConfidenceBadge(data?.confidence);
   const title = getFieldTitle(fieldKey);
   const description = getFieldDescription(fieldKey);
 
+  const status = data?.status || 'not_found';
+  const page = extractPageNumber(data);
+  const badge = getStatusBadge(status, page);
+  const confidenceBadge = getConfidenceBadge(data?.confidence);
+
   const handleCopyClause = (e) => {
     e.stopPropagation();
-    if (!data?.clause) return;
-    navigator.clipboard.writeText(data.clause);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (data?.clause) {
+      navigator.clipboard.writeText(data.clause);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
-  const hasClause = Boolean(data?.clause && data.clause.trim().length > 0);
+  const renderStatusIcon = () => {
+    switch (status) {
+      case 'verified':
+        return <CheckIcon className="w-3.5 h-3.5 text-verified flex-shrink-0" />;
+      case 'unverified':
+        return <AlertTriangleIcon className="w-3.5 h-3.5 text-unverified flex-shrink-0" />;
+      case 'not_found':
+      default:
+        return <HelpCircleIcon className="w-3.5 h-3.5 text-not-found flex-shrink-0" />;
+    }
+  };
 
   return (
-    <div className="rounded-xl bg-zinc-900/70 border border-zinc-800/90 hover:border-zinc-700/80 transition-all duration-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:shadow-indigo-500/5 group">
+    <motion.div
+      layout="position"
+      className="rounded-card bg-surface border border-border p-5 flex flex-col justify-between transition-colors hover:border-border/80"
+    >
       <div>
-        {/* Top bar: Status badge & Page number / Confidence */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          {/* Status Badge */}
-          <div className="flex items-center space-x-2">
-            <span
-              className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge.classes}`}
-            >
-              {status === 'verified' && <CheckIcon className="w-3.5 h-3.5" />}
-              {status === 'unverified' && <AlertTriangleIcon className="w-3.5 h-3.5" />}
-              {status === 'not_found' && <HelpCircleIcon className="w-3.5 h-3.5" />}
-              <span>{statusBadge.label}</span>
-            </span>
+        {/* Card Header: Title & Badges */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+          <div>
+            <h3 className="font-serif text-base font-semibold text-text tracking-tight">
+              {title}
+            </h3>
+            {description && (
+              <p className="text-xs text-text-muted mt-0.5 leading-normal">
+                {description}
+              </p>
+            )}
           </div>
 
-          {/* Right badges: Page number & Confidence */}
-          <div className="flex items-center space-x-2">
-            {page && (
-              <span className="inline-flex items-center space-x-1 text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700/60">
-                <BookOpenIcon className="w-3 h-3 text-zinc-400" />
-                <span>Page {page}</span>
-              </span>
-            )}
+          <div className="flex items-center gap-2 flex-wrap self-start">
+            {/* Status Badge: Icon + Text (Color is never only indicator) */}
+            <span
+              className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-[6px] text-xs font-medium border ${badge.classes}`}
+            >
+              {renderStatusIcon()}
+              <span>{badge.label}</span>
+            </span>
 
-            {confidenceBadge && (
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${confidenceBadge.classes}`}
-              >
+            {/* Optional confidence tag */}
+            {confidenceBadge && status !== 'not_found' && (
+              <span className={`px-2 py-0.5 rounded-[4px] border ${confidenceBadge.classes}`}>
                 {confidenceBadge.label}
               </span>
             )}
           </div>
         </div>
 
-        {/* Human-readable field title (snake_case to Title Case) */}
-        <div className="mb-2">
-          <h4 className="text-base font-semibold text-zinc-100 group-hover:text-white transition-colors">
-            {title}
-          </h4>
-          {description && (
-            <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1" title={description}>
-              {description}
-            </p>
-          )}
-        </div>
-
-        {/* Plain-Language Value */}
+        {/* Card Body: Plain-Language Value with Key Facts Auto-Highlighted & Line Clamping */}
         <div className="mt-3">
-          {status === 'not_found' ? (
-            <p className="text-sm text-zinc-400 italic bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/60">
-              Not specified or no matching clause found in the policy document.
-            </p>
-          ) : data?.value ? (
-            <div className="text-sm text-zinc-200 leading-relaxed font-normal bg-zinc-950/50 p-3 rounded-lg border border-zinc-800/70">
-              {data.value}
-            </div>
+          {data?.value ? (
+            <ClampedValue text={data.value} />
           ) : (
-            <div className="text-sm text-amber-300/90 bg-amber-950/30 p-3 rounded-lg border border-amber-900/30">
-              {data?.note || `Could not verify quote. Check page ${page || 'manually'}.`}
+            <p className="text-sm text-not-found italic">
+              Not explicitly stated or found in document.
+            </p>
+          )}
+
+          {status === 'unverified' && data?.note && (
+            <div className="mt-2.5 p-2.5 rounded-btn bg-unverified-bg border border-unverified/30 text-xs text-unverified flex items-start space-x-2">
+              <AlertTriangleIcon className="w-4 h-4 flex-shrink-0 mt-0.5 text-unverified" />
+              <span>{data.note}</span>
             </div>
           )}
         </div>
-
-        {/* Note if unverified and value exists */}
-        {status === 'unverified' && data?.value && data?.note && (
-          <div className="mt-2 text-xs text-amber-400/90 flex items-center space-x-1.5 px-2">
-            <AlertTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>{data.note}</span>
-          </div>
-        )}
       </div>
 
-      {/* Collapsible Exact Clause Section */}
-      {hasClause && (
-        <div className="mt-4 pt-3 border-t border-zinc-800/80">
+      {/* Monospace Quote Drawer for Exact Verbatim Clause */}
+      {data?.clause && (
+        <div className="mt-4 pt-3 border-t border-border">
           <button
             type="button"
-            onClick={() => setIsClauseExpanded((prev) => !prev)}
-            className="w-full flex items-center justify-between text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors py-1 group/btn"
+            onClick={() => setShowClause(!showClause)}
+            aria-expanded={showClause}
+            className="w-full flex items-center justify-between text-xs font-medium text-text-muted hover:text-text transition-colors min-h-[44px] py-2 cursor-pointer focus-visible:ring-1 focus-visible:ring-accent rounded-btn"
           >
             <span className="flex items-center space-x-1.5">
-              <QuoteIcon className="w-3.5 h-3.5 text-indigo-400 opacity-80" />
-              <span>{isClauseExpanded ? 'Hide exact clause' : 'Show exact clause'}</span>
+              <span>{showClause ? 'Hide verbatim quote' : 'Show verbatim quote'}</span>
+              {page && (
+                <span className="font-mono text-[11px] text-accent bg-accent/10 px-1.5 py-0.2 rounded border border-accent/20">
+                  p. {page}
+                </span>
+              )}
             </span>
-            <ChevronDownIcon
-              className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ${
-                isClauseExpanded ? 'rotate-180' : ''
-              }`}
-            />
+            <motion.span
+              animate={{ rotate: showClause ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="inline-block"
+            >
+              <ChevronDownIcon className="w-4 h-4 text-text-muted" />
+            </motion.span>
           </button>
 
-          {isClauseExpanded && (
-            <div className="mt-2.5 p-3 rounded-lg bg-zinc-950/80 border border-zinc-800 text-xs text-zinc-300 relative group/clause animate-fadeIn">
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-semibold">
-                  Verbatim Policy Citation
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyClause}
-                  className="inline-flex items-center space-x-1 text-[11px] font-medium text-zinc-400 hover:text-white px-1.5 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 transition-colors"
-                  title="Copy verbatim clause"
-                >
-                  {copied ? (
-                    <>
-                      <CheckIcon className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400">Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon className="w-3 h-3" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <blockquote className="italic text-zinc-300 leading-relaxed font-serif pl-2 border-l-2 border-indigo-500/50">
-                "{data.clause}"
-              </blockquote>
-
-              {page && (
-                <div className="mt-2 text-right text-[10px] text-zinc-500 font-mono">
-                  Cited on Page {page}
+          <AnimatePresence initial={false}>
+            {showClause && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-3.5 rounded-btn bg-surface-2 border-l-2 border-accent border-y border-r border-border font-mono text-xs text-text leading-relaxed relative">
+                  <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/80 text-[11px] text-text-muted">
+                    <span className="font-sans font-medium uppercase tracking-wider text-[10px]">
+                      VERBATIM CITATION {page ? `(PAGE ${page})` : ''}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyClause}
+                      className="inline-flex items-center space-x-1 px-2 py-1 rounded bg-surface hover:bg-border text-text-muted hover:text-text transition-colors min-h-[32px] cursor-pointer"
+                      title="Copy exact clause"
+                    >
+                      {copied ? (
+                        <>
+                          <CopiedCheckIcon className="w-3 h-3 text-verified" />
+                          <span className="text-verified">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <CopyIcon className="w-3 h-3 text-text-muted" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <blockquote className="italic font-mono text-text">
+                    "{data.clause}"
+                  </blockquote>
                 </div>
-              )}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

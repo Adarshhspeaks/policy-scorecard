@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloudIcon, FilePdfIcon, XIcon, ScaleIcon, AlertTriangleIcon, SparklesIcon } from './Icons';
+import { motion } from 'framer-motion';
+import { UploadCloudIcon, FilePdfIcon, ScaleIcon, XIcon, ArrowRightIcon } from './Icons';
 import { formatFileSize } from '../utils/formatters';
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
-function DropCard({ label, file, onSelect, onRemove, color = 'indigo' }) {
+function DropCard({ label, file, onSelect, onRemove, indicatorLetter }) {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef(null);
 
@@ -28,35 +29,45 @@ function DropCard({ label, file, onSelect, onRemove, color = 'indigo' }) {
   };
 
   const handleChange = (e) => {
+    e.preventDefault();
     if (e.target.files && e.target.files[0]) {
       onSelect(e.target.files[0]);
     }
   };
 
-  const badgeColor = color === 'indigo' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-  const borderColor = dragActive ? (color === 'indigo' ? 'border-indigo-500 bg-indigo-500/10' : 'border-purple-500 bg-purple-500/10') : file ? 'border-zinc-700 bg-zinc-900/60' : 'border-zinc-800 bg-[#0f1420]/80 hover:border-zinc-700 hover:bg-[#121927]';
-
   return (
-    <div
+    <motion.div
+      animate={{
+        scale: dragActive ? 1.01 : 1,
+        borderColor: dragActive ? '#E8A33D' : '#2E2D25',
+      }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className={`relative border border-dashed rounded-card p-4 sm:p-6 flex flex-col justify-between transition-colors min-h-[200px] ${
+        dragActive ? 'bg-surface-2' : 'bg-surface'
+      }`}
       onDragEnter={handleDrag}
-      onDragOver={handleDrag}
       onDragLeave={handleDrag}
+      onDragOver={handleDrag}
       onDrop={handleDrop}
       onClick={() => !file && inputRef.current?.click()}
-      className={`relative rounded-2xl border-2 border-dashed p-6 transition-all duration-200 text-center flex flex-col justify-between min-h-[260px] ${borderColor} ${file ? 'cursor-default' : 'cursor-pointer'}`}
     >
       <input
         ref={inputRef}
         type="file"
         accept=".pdf,application/pdf"
-        onChange={handleChange}
         className="hidden"
+        onChange={handleChange}
       />
 
-      <div className="flex items-center justify-between mb-3">
-        <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${badgeColor}`}>
-          {label}
-        </span>
+      <div className="flex items-center justify-between pb-3 border-b border-border">
+        <div className="flex items-center space-x-2">
+          <span className="w-5 h-5 rounded-[4px] bg-surface-2 border border-border text-accent font-mono text-[11px] font-semibold flex items-center justify-center">
+            {indicatorLetter}
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-text">
+            {label}
+          </span>
+        </div>
         {file && (
           <button
             type="button"
@@ -65,8 +76,8 @@ function DropCard({ label, file, onSelect, onRemove, color = 'indigo' }) {
               onRemove();
               if (inputRef.current) inputRef.current.value = '';
             }}
-            className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
-            title="Remove file"
+            className="p-1 text-text-muted hover:text-text rounded transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+            aria-label={`Remove ${label}`}
           >
             <XIcon className="w-4 h-4" />
           </button>
@@ -74,161 +85,121 @@ function DropCard({ label, file, onSelect, onRemove, color = 'indigo' }) {
       </div>
 
       {!file ? (
-        <div className="py-4 flex flex-col items-center my-auto">
-          <div className="w-14 h-14 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-300 mb-3 shadow-inner">
-            <UploadCloudIcon className={`w-7 h-7 ${color === 'indigo' ? 'text-indigo-400' : 'text-purple-400'}`} />
-          </div>
-          <h4 className="text-sm font-semibold text-zinc-200 mb-1">
-            Drop {label} here
-          </h4>
-          <p className="text-xs text-zinc-400 max-w-[220px] mb-3">
-            Select or drag PDF policy document
+        <div className="py-6 text-center cursor-pointer space-y-2">
+          <UploadCloudIcon className="w-7 h-7 mx-auto text-text-muted" />
+          <p className="font-serif text-sm font-medium text-text">
+            Drop {label} PDF here
           </p>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              inputRef.current?.click();
-            }}
-            className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium border border-zinc-700 transition-all shadow-sm"
-          >
-            Browse PDF
-          </button>
+          <p className="text-[11px] text-text-muted">
+            or <span className="text-accent underline underline-offset-2">browse computer</span>
+          </p>
         </div>
       ) : (
-        <div className="py-3 flex flex-col items-center justify-center my-auto">
-          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-3">
-            <FilePdfIcon className="w-6 h-6" />
+        <div className="py-4 space-y-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-btn bg-surface-2 border border-border flex items-center justify-center text-accent flex-shrink-0">
+              <FilePdfIcon className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-text truncate">
+                {file.name}
+              </p>
+              <p className="text-[11px] text-text-muted font-mono">
+                {formatFileSize(file.size)}
+              </p>
+            </div>
           </div>
-          <p className="text-xs font-semibold text-zinc-100 max-w-[240px] truncate px-2" title={file.name}>
-            {file.name}
-          </p>
-          <p className="text-[11px] text-zinc-400 mt-0.5">
-            {formatFileSize(file.size)} • Ready for comparison
-          </p>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              inputRef.current?.click();
-            }}
-            className="mt-3 text-[11px] text-zinc-400 hover:text-zinc-200 underline underline-offset-2"
-          >
-            Change PDF
-          </button>
         </div>
       )}
 
-      <div className="text-[11px] text-zinc-500 text-center pt-2 border-t border-zinc-800/60">
-        Max 20MB • Searchable PDF
+      <div className="text-[10px] text-text-muted text-center pt-2 border-t border-border/80">
+        PDF documents up to 20MB
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export default function CompareUploadZone({ onCompare, isLoading, onLoadSamplePolicies }) {
   const [fileA, setFileA] = useState(null);
   const [fileB, setFileB] = useState(null);
-  const [validationError, setValidationError] = useState('');
-
-  const validate = (file) => {
-    if (!file) return false;
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    if (!isPdf) {
-      setValidationError('Only PDF documents are supported.');
-      return false;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      setValidationError(`File size (${formatFileSize(file.size)}) exceeds the 20MB limit.`);
-      return false;
-    }
-    if (file.size === 0) {
-      setValidationError('The selected PDF file is empty (0 bytes).');
-      return false;
-    }
-    setValidationError('');
-    return true;
-  };
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const handleSelectA = (file) => {
-    if (validate(file)) setFileA(file);
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setErrorMsg('Policy A must be a PDF document.');
+      return;
+    }
+    setErrorMsg(null);
+    setFileA(file);
   };
 
   const handleSelectB = (file) => {
-    if (validate(file)) setFileB(file);
-  };
-
-  const handleSubmit = () => {
-    if (!fileA || !fileB) {
-      setValidationError('Please select both Policy A and Policy B before comparing.');
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setErrorMsg('Policy B must be a PDF document.');
       return;
     }
-    onCompare(fileA, fileB);
+    setErrorMsg(null);
+    setFileB(file);
   };
+
+  const handleCompareClick = () => {
+    if (fileA && fileB && !isLoading) {
+      onCompare(fileA, fileB);
+    }
+  };
+
+  const canCompare = Boolean(fileA && fileB && !isLoading);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {validationError && (
-        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center justify-between animate-fadeIn">
-          <div className="flex items-center space-x-2.5">
-            <AlertTriangleIcon className="w-5 h-5 flex-shrink-0 text-rose-400" />
-            <span>{validationError}</span>
-          </div>
-          <button
-            onClick={() => setValidationError('')}
-            className="text-rose-400 hover:text-rose-200 p-1"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Dual Upload Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DropCard
-          label="Policy A (e.g. Existing Plan)"
+          label="Policy A"
+          indicatorLetter="A"
           file={fileA}
           onSelect={handleSelectA}
           onRemove={() => setFileA(null)}
-          color="indigo"
         />
-
         <DropCard
-          label="Policy B (e.g. Alternative Plan)"
+          label="Policy B"
+          indicatorLetter="B"
           file={fileB}
           onSelect={handleSelectB}
           onRemove={() => setFileB(null)}
-          color="purple"
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+      {errorMsg && (
+        <div className="p-3 rounded-btn bg-unverified-bg border border-unverified/30 text-xs text-unverified flex items-center space-x-2">
+          <XIcon className="w-4 h-4 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!fileA || !fileB || isLoading}
-          className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
+          onClick={onLoadSamplePolicies}
+          className="text-xs text-text-muted hover:text-text underline underline-offset-4 min-h-[44px] cursor-pointer whitespace-normal break-words text-center sm:text-left"
         >
-          <ScaleIcon className="w-4 h-4 text-indigo-200 group-hover:scale-110 transition-transform" />
-          <span>Compare Both Policies Side-by-Side</span>
+          Load 2 Sample Benchmark Policies →
         </button>
 
-        {onLoadSamplePolicies && (
-          <button
-            type="button"
-            onClick={onLoadSamplePolicies}
-            className="w-full sm:w-auto px-4 py-3.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white font-medium text-xs border border-zinc-700 transition-colors flex items-center justify-center space-x-1.5"
-          >
-            <SparklesIcon className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Load Sample Comparison (SecureLife vs MediCare Plus)</span>
-          </button>
-        )}
+        <motion.button
+          type="button"
+          onClick={handleCompareClick}
+          disabled={!canCompare}
+          whileHover={canCompare ? { y: -1 } : {}}
+          whileTap={canCompare ? { scale: 0.98 } : {}}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="w-full sm:w-auto px-7 py-3 rounded-btn bg-accent text-accent-ink font-semibold text-sm transition-opacity hover:opacity-95 flex items-center justify-center space-x-2 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] cursor-pointer"
+        >
+          <ScaleIcon className="w-4 h-4" />
+          <span>Compare Both Policies</span>
+        </motion.button>
       </div>
-
-      {(!fileA || !fileB) && (
-        <p className="text-center text-xs text-zinc-500">
-          Upload both policies to unlock automated difference highlighting, waiting period checks, and co-payment contrasts.
-        </p>
-      )}
     </div>
   );
 }

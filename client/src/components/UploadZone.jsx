@@ -1,36 +1,33 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloudIcon, FilePdfIcon, XIcon, SparklesIcon, AlertTriangleIcon } from './Icons';
+import { motion } from 'framer-motion';
+import { UploadCloudIcon, FilePdfIcon, CheckIcon, XIcon, ArrowRightIcon } from './Icons';
 import { formatFileSize } from '../utils/formatters';
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export default function UploadZone({ onAnalyze, isLoading, error, onClearError }) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [validationError, setValidationError] = useState('');
+  const [validationError, setValidationError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const validateFile = (file) => {
-    if (!file) return false;
+  const validateAndSetFile = (file) => {
+    setValidationError(null);
+    if (onClearError) onClearError();
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    if (!isPdf) {
-      setValidationError('Please upload a valid PDF file. Only .pdf files are supported.');
-      return false;
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setValidationError('Please select a valid PDF file (.pdf only).');
+      return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setValidationError(`File size (${formatFileSize(file.size)}) exceeds the maximum limit of 20MB.`);
-      return false;
+      setValidationError('File size exceeds the 20MB limit.');
+      return;
     }
 
-    if (file.size === 0) {
-      setValidationError('The selected PDF file is empty (0 bytes).');
-      return false;
-    }
-
-    setValidationError('');
-    return true;
+    setSelectedFile(file);
   };
 
   const handleDrag = (e) => {
@@ -47,199 +44,135 @@ export default function UploadZone({ onAnalyze, isLoading, error, onClearError }
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (onClearError) onClearError();
-
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-      }
+      validateAndSetFile(e.dataTransfer.files[0]);
     }
   };
 
-  const handleFileChange = (e) => {
-    if (onClearError) onClearError();
+  const handleChange = (e) => {
+    e.preventDefault();
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (validateFile(file)) {
-        setSelectedFile(file);
-      }
+      validateAndSetFile(e.target.files[0]);
     }
   };
 
   const handleRemoveFile = (e) => {
     e.stopPropagation();
     setSelectedFile(null);
-    setValidationError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setValidationError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = () => {
-    if (!selectedFile) {
-      setValidationError('Please select or drop a PDF file first.');
-      return;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedFile && !isLoading) {
+      onAnalyze(selectedFile);
     }
-    onAnalyze(selectedFile);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {/* Validation alert if local validation fails */}
-      {validationError && (
-        <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center justify-between animate-fadeIn">
-          <div className="flex items-center space-x-2.5">
-            <AlertTriangleIcon className="w-5 h-5 flex-shrink-0 text-rose-400" />
-            <span>{validationError}</span>
-          </div>
-          <button
-            onClick={() => setValidationError('')}
-            className="text-rose-400 hover:text-rose-200 transition-colors p-1"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Drag & Drop Card */}
-      <div
+    <div className="w-full max-w-2xl mx-auto space-y-6">
+      {/* Drag & Drop Area with Framer Motion hover/drag response */}
+      <motion.div
+        animate={{
+          scale: dragActive ? 1.01 : 1,
+          borderColor: dragActive ? '#E8A33D' : selectedFile ? '#2E2D25' : '#2E2D25',
+          backgroundColor: dragActive ? '#1C1B16' : '#1C1B16',
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className={`relative border border-dashed rounded-card p-4 sm:p-10 text-center transition-colors ${
+          dragActive ? 'bg-surface-2' : 'bg-surface'
+        }`}
         onDragEnter={handleDrag}
-        onDragOver={handleDrag}
         onDragLeave={handleDrag}
+        onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => !selectedFile && fileInputRef.current?.click()}
-        className={`relative rounded-2xl border-2 border-dashed p-8 transition-all duration-200 text-center cursor-pointer ${
-          dragActive
-            ? 'border-indigo-500 bg-indigo-500/10 scale-[1.01] shadow-xl shadow-indigo-500/10'
-            : selectedFile
-            ? 'border-zinc-700 bg-zinc-900/60 cursor-default'
-            : 'border-zinc-800 bg-[#0f1420]/80 hover:border-zinc-700 hover:bg-[#121927]'
-        }`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,application/pdf"
-          onChange={handleFileChange}
           className="hidden"
-          id="policy-file-input"
+          onChange={handleChange}
+          disabled={isLoading}
         />
 
         {!selectedFile ? (
-          <div className="py-6 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-300 mb-4 group-hover:scale-105 transition-transform shadow-inner">
-              <UploadCloudIcon className="w-8 h-8 text-indigo-400" />
+          <div className="space-y-4 cursor-pointer">
+            <div className="w-14 h-14 mx-auto rounded-card bg-surface-2 border border-border flex items-center justify-center text-accent">
+              <UploadCloudIcon className="w-7 h-7 text-accent" />
             </div>
 
-            <h3 className="text-lg font-semibold text-zinc-100 mb-1">
-              Drop your insurance policy PDF here
-            </h3>
-            <p className="text-sm text-zinc-400 mb-4 max-w-sm">
-              Drag & drop your health policy document or click to browse from your computer.
-            </p>
+            <div>
+              <p className="font-serif text-lg font-medium text-text">
+                Drop your health policy PDF here
+              </p>
+              <p className="text-xs text-text-muted mt-1">
+                or <span className="text-accent underline underline-offset-2">browse your computer</span>
+              </p>
+            </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                fileInputRef.current?.click();
-              }}
-              className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium border border-zinc-700/80 transition-all shadow-sm"
-            >
-              Select PDF File
-            </button>
-
-            <div className="mt-6 flex items-center space-x-4 text-xs text-zinc-500">
-              <span className="flex items-center space-x-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>PDF format only</span>
-              </span>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-text-muted pt-2 border-t border-border">
+              <span>PDF documents up to 20MB</span>
               <span>•</span>
-              <span>Max file size: 20MB</span>
+              <span>IRDAI standard policies</span>
             </div>
           </div>
         ) : (
-          <div className="py-2">
-            <div className="p-4 rounded-xl bg-zinc-800/80 border border-zinc-700 flex items-center justify-between text-left mb-6 shadow-sm">
-              <div className="flex items-center space-x-3.5 min-w-0">
-                <div className="w-12 h-12 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
-                  <FilePdfIcon className="w-7 h-7" />
+          <div className="space-y-4 text-left">
+            <div className="p-4 rounded-btn bg-surface-2 border border-border flex items-center justify-between gap-3">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-10 h-10 rounded-btn bg-surface border border-border flex items-center justify-center text-accent flex-shrink-0">
+                  <FilePdfIcon className="w-5 h-5 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-100 truncate pr-2">
+                  <p className="text-sm font-medium text-text truncate max-w-sm">
                     {selectedFile.name}
                   </p>
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    {formatFileSize(selectedFile.size)} • PDF Document
+                  <p className="text-xs text-text-muted font-mono">
+                    {formatFileSize(selectedFile.size)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={handleRemoveFile}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-colors"
-                  title="Remove file"
-                >
-                  <XIcon className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleRemoveFile}
+                disabled={isLoading}
+                className="p-2 rounded-btn text-text-muted hover:text-text hover:bg-surface transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                title="Remove file"
+                aria-label="Remove selected PDF"
+              >
+                <XIcon className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
+            <div className="flex justify-end pt-2">
+              <motion.button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="w-full sm:w-auto px-6 py-3 rounded-btn bg-accent text-accent-ink font-semibold text-sm transition-opacity hover:opacity-95 flex items-center justify-center space-x-2 disabled:opacity-50 min-h-[44px] cursor-pointer"
               >
-                <SparklesIcon className="w-4 h-4 text-indigo-200 group-hover:rotate-12 transition-transform" />
-                <span>Analyze Policy Scorecard</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 font-medium text-sm border border-zinc-700 transition-colors"
-              >
-                Choose different file
-              </button>
+                <span>Extract & Verify Scorecard</span>
+                <ArrowRightIcon className="w-4 h-4" />
+              </motion.button>
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Info features below upload */}
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80">
-          <div className="text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            Exact Clause Citations
-          </div>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Verbatim quotes from the policy text are verified against cited document pages.
-          </p>
+      {/* Validation warning */}
+      {validationError && (
+        <div className="p-3 rounded-btn bg-unverified-bg border border-unverified/30 text-xs text-unverified flex items-center space-x-2">
+          <XIcon className="w-4 h-4 flex-shrink-0" />
+          <span>{validationError}</span>
         </div>
-
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80">
-          <div className="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            Strict Factuality
-          </div>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Zero guessing. If conditions aren't stated or cannot be confirmed, they are flagged unverified.
-          </p>
-        </div>
-
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80">
-          <div className="text-violet-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            Plain Language
-          </div>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Complex insurance jargon broken down into clear, plain-language summaries.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

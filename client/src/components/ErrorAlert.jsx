@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangleIcon, ScanAlertIcon, XIcon } from './Icons';
+import { AlertTriangleIcon, ScanAlertIcon, XIcon, RefreshCwIcon } from './Icons';
 
 function parseErrorMessage(msg) {
   if (!msg || typeof msg !== 'string') return '';
@@ -26,33 +26,36 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
 
   if (isScannedPdf) {
     return (
-      <div className="w-full max-w-2xl mx-auto mb-6 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-200 shadow-xl relative animate-fadeIn">
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-full max-w-2xl mx-auto mb-6 p-5 rounded-card bg-unverified-bg border border-unverified/30 text-text relative">
+        <div className="flex items-start space-x-3.5">
+          <div className="w-9 h-9 rounded-btn bg-surface border border-border text-unverified flex items-center justify-center flex-shrink-0 mt-0.5">
             <ScanAlertIcon className="w-5 h-5" />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-amber-100 text-base">
+              <h4 className="font-serif text-base font-semibold text-text">
                 Scanned PDF Detected (OCR Not Supported)
               </h4>
               {onDismiss && (
                 <button
+                  type="button"
                   onClick={onDismiss}
-                  className="text-amber-400 hover:text-amber-200 p-1 rounded-lg transition-colors"
+                  className="text-text-muted hover:text-text p-2 rounded-btn transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                  aria-label="Dismiss message"
                 >
                   <XIcon className="w-4 h-4" />
                 </button>
               )}
             </div>
-            <p className="text-sm text-amber-200/90 mt-1.5 leading-relaxed">
-              This document contains fewer than 500 extractable text characters and appears to be a scanned image or bitmap PDF. The current analyzer requires a digital PDF with selectable text.
+            <p className="text-xs text-text-muted mt-1 leading-relaxed">
+              This document contains fewer than 500 extractable characters and appears to be a scanned image. The analyzer requires a digital PDF with selectable text.
             </p>
-            <div className="mt-3 flex items-center space-x-3">
+            <div className="mt-3.5 flex items-center space-x-3">
               {onRetry && (
                 <button
+                  type="button"
                   onClick={onRetry}
-                  className="text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 transition-colors"
+                  className="text-xs font-semibold px-4 py-2 rounded-btn bg-accent text-accent-ink hover:opacity-95 transition-opacity min-h-[44px] cursor-pointer"
                 >
                   Upload another PDF
                 </button>
@@ -65,100 +68,57 @@ export default function ErrorAlert({ error, onDismiss, onRetry }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-6 p-5 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-200 shadow-xl relative animate-fadeIn">
-      <div className="flex items-start space-x-4">
-        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+    <div className="w-full max-w-2xl mx-auto mb-6 p-5 rounded-card bg-surface border border-unverified/40 text-text relative">
+      <div className="flex items-start space-x-3.5">
+        <div className="w-9 h-9 rounded-btn bg-surface-2 border border-border text-unverified flex items-center justify-center flex-shrink-0 mt-0.5">
           <AlertTriangleIcon className="w-5 h-5" />
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-rose-100 text-base flex items-center space-x-2">
+            <h4 className="font-serif text-base font-semibold text-text flex items-center space-x-2">
               <span>
                 {isNetworkError
                   ? 'Cannot Connect to Backend Server'
                   : isInvalidApiKey
-                  ? 'Invalid Gemini API Key in .env'
+                  ? 'Invalid API Key Configuration'
                   : 'Analysis Request Failed'}
               </span>
               {error.status ? (
-                <span className="text-xs px-2 py-0.5 rounded bg-rose-950/80 border border-rose-800/80 text-rose-300 font-mono">
+                <span className="text-[11px] px-2 py-0.5 rounded font-mono bg-surface-2 border border-border text-text-muted">
                   HTTP {error.status}
                 </span>
               ) : null}
             </h4>
             {onDismiss && (
               <button
+                type="button"
                 onClick={onDismiss}
-                className="text-rose-400 hover:text-rose-200 p-1 rounded-lg transition-colors"
+                className="text-text-muted hover:text-text p-2 rounded-btn transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                aria-label="Dismiss error"
               >
                 <XIcon className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          <p className="text-sm text-rose-200/90 mt-1.5 leading-relaxed break-words">
+          <p className="text-xs text-text-muted mt-1.5 leading-relaxed break-words">
             {isNetworkError
               ? `Unable to communicate with the API server at ${import.meta.env.VITE_API_URL || 'http://localhost:5000'}. Make sure your Node.js backend is running with "npm start".`
               : cleanMessage || 'An unexpected error occurred while analyzing the document.'}
           </p>
 
-          {error.status === 503 && (
-            <p className="text-xs text-amber-300/90 mt-2 font-mono bg-amber-950/40 p-2 rounded border border-amber-900/40">
-              Note: The Gemini service is temporarily experiencing high traffic spikes. Please wait a few seconds and click "Try Again".
-            </p>
-          )}
-
-          {isInvalidApiKey && (
-            <div className="mt-3 text-xs text-rose-300 bg-rose-950/60 p-3.5 rounded-xl border border-rose-900/60 space-y-2">
-              <div className="font-semibold text-rose-200">How to fix this error:</div>
-              <p className="text-rose-300/90 leading-relaxed">
-                Google returned <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">ACCESS_TOKEN_TYPE_UNSUPPORTED</code>. This occurs when an <code className="bg-rose-900/40 px-1 py-0.5 rounded text-rose-100 font-mono">AQ.</code> key is created in an existing Google Cloud project where the Generative Language API is not yet enabled.
-              </p>
-              <div className="space-y-1.5 pl-1">
-                <div>
-                  <strong className="text-rose-100">Option A (Fastest):</strong> In{' '}
-                  <a
-                    href="https://aistudio.google.com/app/apikey"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline text-indigo-300 hover:text-indigo-200 font-medium"
-                  >
-                    Google AI Studio
-                  </a>
-                  , click <strong>Create API key</strong> and choose <strong>"Create API key in new project"</strong>. New projects have all required APIs enabled automatically.
-                </div>
-                <div>
-                  <strong className="text-rose-100">Option B:</strong> If using your existing project, enable the{' '}
-                  <a
-                    href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline text-indigo-300 hover:text-indigo-200 font-medium"
-                  >
-                    Generative Language API in Google Cloud Console
-                  </a>
-                  .
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!isInvalidApiKey && error.status === 500 && (
-            <p className="text-xs text-rose-300/80 mt-2 font-mono bg-rose-950/40 p-2 rounded border border-rose-900/40">
-              Tip: Verify that GEMINI_API_KEY is configured in your backend .env file.
-            </p>
-          )}
-
-          {onRetry && (
-            <div className="mt-3">
+          <div className="mt-4 flex items-center space-x-3">
+            {onRetry && (
               <button
+                type="button"
                 onClick={onRetry}
-                className="text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 transition-colors"
+                className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-btn bg-accent text-accent-ink text-xs font-semibold hover:opacity-95 transition-opacity min-h-[44px] cursor-pointer"
               >
-                Try Again
+                <RefreshCwIcon className="w-3.5 h-3.5 text-accent-ink" />
+                <span>Try Again</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

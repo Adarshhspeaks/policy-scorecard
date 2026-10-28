@@ -60,30 +60,33 @@ export function extractPageNumber(fieldData) {
 }
 
 /**
- * Returns formatted status badge attributes
+ * Returns formatted status badge attributes conforming to the strict editorial palette:
+ * - verified: #8DB580 (moss green)
+ * - unverified: #E0894B (burnt orange)
+ * - not-found: #8A867A (stone grey)
  */
 export function getStatusBadge(status, page) {
   switch (status) {
     case 'verified':
       return {
         label: 'Verified',
-        classes: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-        dotClass: 'bg-emerald-400',
+        classes: 'bg-verified-bg text-verified border-verified/30',
+        dotClass: 'bg-verified',
         type: 'verified',
       };
     case 'unverified':
       return {
-        label: page ? `Unverified - check page ${page}` : 'Unverified - check page manually',
-        classes: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-        dotClass: 'bg-amber-400',
+        label: page ? `Unverified - check page ${page}` : 'Unverified - check manually',
+        classes: 'bg-unverified-bg text-unverified border-unverified/30',
+        dotClass: 'bg-unverified',
         type: 'unverified',
       };
     case 'not_found':
     default:
       return {
         label: 'Not found',
-        classes: 'bg-zinc-800/80 text-zinc-400 border-zinc-700/60',
-        dotClass: 'bg-zinc-500',
+        classes: 'bg-not-found-bg text-not-found border-border',
+        dotClass: 'bg-not-found',
         type: 'not_found',
       };
   }
@@ -99,22 +102,22 @@ export function getConfidenceBadge(confidence) {
     case 'high':
       return {
         label: 'High confidence',
-        classes: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/50',
+        classes: 'bg-surface text-text-muted border-border font-mono text-[11px]',
       };
     case 'medium':
       return {
         label: 'Medium confidence',
-        classes: 'bg-yellow-950/80 text-yellow-300 border-yellow-800/50',
+        classes: 'bg-surface text-text-muted border-border font-mono text-[11px]',
       };
     case 'low':
       return {
         label: 'Low confidence',
-        classes: 'bg-rose-950/80 text-rose-300 border-rose-800/50',
+        classes: 'bg-surface text-unverified border-border font-mono text-[11px]',
       };
     default:
       return {
         label: `${confidence} confidence`,
-        classes: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+        classes: 'bg-surface text-text-muted border-border font-mono text-[11px]',
       };
   }
 }

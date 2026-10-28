@@ -1,122 +1,108 @@
 import React, { useState, useEffect } from 'react';
-import { ScaleIcon, SparklesIcon } from './Icons';
-
-const COMPARE_STEPS = [
-  { label: 'Reading PDF pages for both policies in parallel...', duration: 2500 },
-  { label: 'Extracting key terms with Google Gemini AI...', duration: 4500 },
-  { label: 'Cross-verifying clauses against cited pages...', duration: 4000 },
-  { label: 'Highlighting differences & waiting period contrasts...', duration: 3000 },
-];
+import { motion } from 'framer-motion';
+import { ScaleIcon } from './Icons';
 
 export default function LoadingCompare({ fileA, fileB }) {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const steps = [
+    { title: "Reading Policy Documents", desc: "Parsing text streams from Policy A & Policy B in parallel" },
+    { title: "Extracting Comparable Terms", desc: "Aligning waiting periods, room caps, and sub-limits" },
+    { title: "Detecting Discrepancies", desc: "Cross-validating exact clauses and computing differences" },
+  ];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsElapsed((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    let accumulatedTime = 0;
-    const timeouts = COMPARE_STEPS.map((step, idx) => {
-      accumulatedTime += step.duration;
-      return setTimeout(() => {
-        setCurrentStepIndex((prev) => Math.max(prev, idx));
-      }, accumulatedTime);
-    });
-
+    const t1 = setTimeout(() => setCurrentStep(1), 1400);
+    const t2 = setTimeout(() => setCurrentStep(2), 2900);
     return () => {
-      timeouts.forEach(clearTimeout);
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
   }, []);
 
   return (
-    <div className="w-full max-w-xl mx-auto py-8">
-      <div className="p-8 rounded-2xl bg-zinc-900/70 border border-zinc-800 text-center shadow-2xl relative overflow-hidden">
-        {/* Glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-
-        {/* Central Compare Animation */}
-        <div className="flex items-center justify-center space-x-4 mb-6">
-          {/* Policy A doc icon */}
-          <div className="w-16 h-20 rounded-xl bg-indigo-950/40 border border-indigo-500/30 p-2 shadow-inner flex flex-col justify-between relative overflow-hidden animate-pulse">
-            <div className="space-y-1 opacity-50">
-              <div className="h-1 bg-indigo-300 rounded w-3/4"></div>
-              <div className="h-1 bg-indigo-400 rounded w-full"></div>
-              <div className="h-1 bg-indigo-300 rounded w-1/2"></div>
-            </div>
-            <span className="text-[9px] font-bold text-indigo-300 tracking-wider">DOC A</span>
-          </div>
-
-          {/* Scale comparison icon */}
-          <div className="w-12 h-12 rounded-full bg-zinc-800/90 border border-zinc-700 flex items-center justify-center text-indigo-400 shadow-md">
-            <ScaleIcon className="w-6 h-6 animate-bounce" />
-          </div>
-
-          {/* Policy B doc icon */}
-          <div className="w-16 h-20 rounded-xl bg-purple-950/40 border border-purple-500/30 p-2 shadow-inner flex flex-col justify-between relative overflow-hidden animate-pulse">
-            <div className="space-y-1 opacity-50">
-              <div className="h-1 bg-purple-300 rounded w-3/4"></div>
-              <div className="h-1 bg-purple-400 rounded w-full"></div>
-              <div className="h-1 bg-purple-300 rounded w-1/2"></div>
-            </div>
-            <span className="text-[9px] font-bold text-purple-300 tracking-wider">DOC B</span>
-          </div>
+    <div className="w-full max-w-2xl mx-auto py-8 space-y-8">
+      {/* Document Meta Header */}
+      <div className="text-center space-y-3">
+        <div className="w-12 h-12 mx-auto rounded-card bg-surface border border-border flex items-center justify-center text-accent">
+          <ScaleIcon className="w-6 h-6 text-accent" />
         </div>
-
-        <h3 className="text-xl font-bold text-zinc-100 mb-1 flex items-center justify-center space-x-2">
-          <span>Comparing Both Policies</span>
-          <span className="flex space-x-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
-          </span>
-        </h3>
-
-        <div className="flex items-center justify-center space-x-2 text-xs text-zinc-400 font-mono mb-6 truncate max-w-md mx-auto">
-          <span className="text-indigo-300 truncate max-w-[150px]">{fileA?.name || 'Policy A'}</span>
-          <span className="text-zinc-600 font-bold">vs</span>
-          <span className="text-purple-300 truncate max-w-[150px]">{fileB?.name || 'Policy B'}</span>
+        <h2 className="font-serif text-xl font-medium text-text">
+          Comparing Two Policies
+        </h2>
+        <div className="flex items-center justify-center space-x-2 text-xs font-mono text-text-muted">
+          <span className="truncate max-w-[160px] text-text">{fileA?.name || 'Policy A'}</span>
+          <span>vs</span>
+          <span className="truncate max-w-[160px] text-text">{fileB?.name || 'Policy B'}</span>
         </div>
+      </div>
 
-        {/* Steps progress */}
-        <div className="w-full max-w-md mx-auto space-y-2.5 my-6">
-          {COMPARE_STEPS.map((step, idx) => {
-            const isDone = idx < currentStepIndex;
-            const isCurrent = idx === currentStepIndex;
-            return (
-              <div
-                key={idx}
-                className={`flex items-center space-x-3 text-xs px-3.5 py-2.5 rounded-lg transition-all duration-300 ${
-                  isCurrent
-                    ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-300'
-                    : isDone
-                    ? 'bg-zinc-800/40 border border-transparent text-zinc-400'
-                    : 'opacity-40 text-zinc-500 border border-transparent'
-                }`}
-              >
-                <div className="flex-shrink-0">
-                  {isDone ? (
-                    <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
-                      ✓
-                    </div>
-                  ) : isCurrent ? (
-                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin"></div>
-                  ) : (
-                    <div className="w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700"></div>
+      {/* Progress Steps List */}
+      <div className="p-5 rounded-card bg-surface border border-border divide-y divide-border/80">
+        {steps.map((step, idx) => {
+          const isDone = currentStep > idx;
+          const isCurrent = currentStep === idx;
+
+          return (
+            <div
+              key={step.title}
+              className={`py-3.5 first:pt-0 last:pb-0 flex items-start space-x-3 transition-opacity ${
+                isDone || isCurrent ? 'opacity-100' : 'opacity-40'
+              }`}
+            >
+              <div className="w-6 h-6 rounded-full bg-surface-2 border border-border flex items-center justify-center flex-shrink-0 mt-0.5">
+                {isDone ? (
+                  <svg className="w-3.5 h-3.5 text-verified" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <motion.path
+                      d="M20 6 9 17 4 12"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                    />
+                  </svg>
+                ) : isCurrent ? (
+                  <span className="w-2 h-2 rounded-full bg-accent" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-text">
+                    {step.title}
+                  </span>
+                  {isCurrent && (
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.2 rounded border border-accent/20">
+                      In progress
+                    </span>
                   )}
                 </div>
-                <span className="font-medium text-left flex-1">{step.label}</span>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {step.desc}
+                </p>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
-        <div className="text-xs text-zinc-500 flex items-center justify-center space-x-2 mt-4">
-          <span>Elapsed time: {secondsElapsed}s</span>
-          <span>•</span>
-          <span>Simultaneous dual verification</span>
+      {/* Skeletons Preview */}
+      <div className="space-y-3 pt-2">
+        <p className="text-xs font-mono uppercase tracking-wider text-text-muted text-center">
+          Building 3-Column Comparison Matrix
+        </p>
+        <div className="space-y-3">
+          {[1, 2].map((n) => (
+            <div
+              key={n}
+              className="p-4 rounded-card bg-surface/50 border border-border grid grid-cols-1 md:grid-cols-3 gap-3"
+            >
+              <div className="h-10 bg-surface-2 rounded" />
+              <div className="h-10 bg-surface-2/60 rounded" />
+              <div className="h-10 bg-surface-2/60 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

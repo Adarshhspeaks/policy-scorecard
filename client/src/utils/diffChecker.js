@@ -145,3 +145,5 @@ export function computeComparisonStats(comparisonResult) {
     unverifiedCount,
   };
 }
+
+export const isDifferent = isFieldDifferent;

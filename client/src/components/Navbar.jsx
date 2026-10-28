@@ -2,51 +2,40 @@ import React from 'react';
 import { ShieldCheckIcon } from './Icons';
 
 export default function Navbar({ onReset, hasResults }) {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   return (
-    <header className="border-b border-zinc-800/80 bg-[#0d121d]/80 backdrop-blur-md sticky top-0 z-30">
+    <header className="border-b border-border bg-surface/90 sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div 
+        <button
+          type="button"
           onClick={onReset}
-          className="flex items-center space-x-3 cursor-pointer group"
-          role="button"
-          tabIndex={0}
+          className="flex items-center space-x-3 text-left group focus-visible:ring-2 focus-visible:ring-accent rounded-btn p-1 -ml-1 transition-opacity"
+          aria-label="Policy Scorecard home"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200">
-            <ShieldCheckIcon className="w-6 h-6" />
+          <div className="w-9 h-9 rounded-btn bg-surface-2 border border-border flex items-center justify-center text-accent">
+            <ShieldCheckIcon className="w-5 h-5 text-accent" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg text-zinc-100 tracking-tight group-hover:text-white transition-colors">
+              <span className="font-serif text-lg font-semibold tracking-tight text-text">
                 Policy Scorecard
               </span>
-              <span className="px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                AI Verifier
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" aria-hidden="true" />
             </div>
-            <p className="text-xs text-zinc-400 hidden sm:block">
-              Verbatim clause extraction & citation validation
+            <p className="text-[11px] text-text-muted leading-none hidden sm:block">
+              Verbatim Health Insurance Verification
             </p>
           </div>
-        </div>
+        </button>
 
-        <div className="flex items-center space-x-4">
-          {hasResults && (
-            <button
-              onClick={onReset}
-              className="text-xs font-medium px-3.5 py-1.5 rounded-lg bg-zinc-800/90 text-zinc-200 hover:bg-zinc-700 hover:text-white border border-zinc-700 transition-all flex items-center space-x-1.5 shadow-sm"
-            >
-              <span>+ Upload New PDF</span>
-            </button>
-          )}
-
-          <div className="hidden md:flex items-center space-x-2 text-xs font-mono text-zinc-400 bg-zinc-900/90 px-3 py-1.5 rounded-lg border border-zinc-800">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-zinc-500">API:</span>
-            <span className="text-zinc-300 truncate max-w-[150px]">{apiUrl}</span>
-          </div>
-        </div>
+        {hasResults && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs font-medium text-text-muted hover:text-text transition-colors min-h-[44px] px-3 inline-flex items-center focus-visible:ring-2 focus-visible:ring-accent rounded-btn"
+          >
+            ← Back to Upload
+          </button>
+        )}
       </div>
     </header>
   );
